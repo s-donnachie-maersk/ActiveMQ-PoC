@@ -1,8 +1,12 @@
 ﻿using ActiveMQ_PoC.ConsumerA.Consumers;
+using ActiveMQ_PoC.ConsumerA.Data.Context;
 using ActiveMQ_PoC.Shared.Constants;
 using MassTransit;
 using MassTransit.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Drawing;
 
 public class Program
 {
@@ -11,6 +15,17 @@ public class Program
         await Host.CreateDefaultBuilder(args)
             .ConfigureServices(services =>
             {
+                services.AddDbContext<AppDbContext>(options =>
+                {
+                    var connectionString =
+                        "Host=localhost;Database=ActiveMQ;Integrated Security=True;Username=postgres;Include Error Detail=true;Maximum Pool Size=10";
+                    connectionString = $"{connectionString};TrustServerCertificate=true;";
+                    options.UseNpgsql(connectionString, builder =>
+                    {
+                        builder.CommandTimeout((int)TimeSpan.FromMinutes(5).TotalSeconds);
+                    });
+                });
+
                 services.AddMassTransit(x =>
                 {
                     x.AddConsumer<TransportOrderAmendedEventConsumer>();
